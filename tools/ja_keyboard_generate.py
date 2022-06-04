@@ -107,15 +107,11 @@ def output_cycle(cycle, loop=True):
 	cycle = list(cycle)
 	if len(cycle) == 1:
 		return "" # Don't do anything for noop one-kana cycles.
-	if loop:
-		# Map the last kana back to the start.
-		mapping = zip(cycle, cycle[1:] + [cycle[0]])
-	else:
-		# The last kana doesn't get any mapping.
-		mapping = zip(cycle, cycle[1:])
-	lua_snippet = []
-	for kana_src, kana_dst in mapping:
-		lua_snippet.append(f"[{escape_luastring(kana_src)}] = {escape_luastring(kana_dst)},")
+	mapping = zip(cycle, cycle[1:] + [cycle[0]]) if loop else zip(cycle, cycle[1:])
+	lua_snippet = [
+	    f"[{escape_luastring(kana_src)}] = {escape_luastring(kana_dst)},"
+	    for kana_src, kana_dst in mapping
+	]
 	return " ".join(lua_snippet)
 
 # Straightforward cycle over all options.
@@ -162,11 +158,7 @@ class Key(object):
 		return lua_item.replace(", \n, ", ",\n" + " " * indent)
 
 	def render_key_cycle(self):
-		cycle = output_cycle(self.loop)
-		if cycle:
-			return f"{{ {cycle} }}"
-		else:
-			return "nil"
+		return f"{{ {cycle} }}" if (cycle := output_cycle(self.loop)) else "nil"
 
 # Hiragana, katakana, latin, and symbol keys in [tap, east, north, west, south]
 # order to match GBoard/Flick input. This is basically the Japanese version of
